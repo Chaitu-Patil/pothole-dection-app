@@ -1,4 +1,4 @@
-const API_BASE = "https://your-app.railway.app"; // TODO: replace with your Railway URL
+const API_BASE = "http://pothole-dection-app-production.up.railway.app"; // TODO: replace with your Railway URL
 
 // --- PWA: Register service worker ---
 if ("serviceWorker" in navigator) {
