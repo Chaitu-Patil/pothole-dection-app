@@ -4,9 +4,35 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
   <title>PotholeIQ</title>
+
+  <!-- PWA manifest -->
+  <link rel="manifest" href="/manifest.json">
+
+  <!-- iOS home screen support (Safari doesn't use manifest for these) -->
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="PotholeIQ">
+  <link rel="apple-touch-icon" href="/icons/icon-192.png">
+
+  <!-- Theme color (browser chrome on Android) -->
+  <meta name="theme-color" content="#f5c842">
+
+  <!-- Prevent search engine indexing of the app shell -->
+  <meta name="description" content="Report potholes and help prioritise city repairs.">
+
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
+
+  <!-- Install prompt banner (hidden by default, shown by JS) -->
+  <div id="install-banner" class="install-banner" hidden>
+    <div class="install-text">
+      <strong>Add to home screen</strong>
+      <span>Report potholes instantly, anywhere</span>
+    </div>
+    <button id="install-btn" class="install-btn">Install</button>
+    <button id="install-dismiss" class="install-dismiss" aria-label="Dismiss">✕</button>
+  </div>
 
   <header>
     <span class="logo">PotholeIQ</span>
