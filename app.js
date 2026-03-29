@@ -1,4 +1,45 @@
-const API_BASE = "http://localhost:8000";
+const API_BASE = "https://your-app.railway.app"; // TODO: replace with your Railway URL
+
+// --- PWA: Register service worker ---
+if ("serviceWorker" in navigator) {
+  window.addEventListener("load", () => {
+    navigator.serviceWorker.register("/sw.js").catch((err) => {
+      console.warn("Service worker registration failed:", err);
+    });
+  });
+}
+
+// --- PWA: Install prompt ---
+// The browser fires this event when the app meets PWA install criteria.
+// We hold onto it and show our own banner instead of the default prompt.
+let installPromptEvent = null;
+
+window.addEventListener("beforeinstallprompt", (e) => {
+  e.preventDefault();
+  installPromptEvent = e;
+
+  const banner = document.getElementById("install-banner");
+  banner.hidden = false;
+});
+
+document.getElementById("install-btn").addEventListener("click", async () => {
+  if (!installPromptEvent) return;
+  installPromptEvent.prompt();
+  const { outcome } = await installPromptEvent.userChoice;
+  installPromptEvent = null;
+  document.getElementById("install-banner").hidden = true;
+  console.log("Install outcome:", outcome);
+});
+
+document.getElementById("install-dismiss").addEventListener("click", () => {
+  document.getElementById("install-banner").hidden = true;
+});
+
+// Hide banner if already installed (running in standalone mode)
+if (window.matchMedia("(display-mode: standalone)").matches) {
+  document.getElementById("install-banner").hidden = true;
+}
+
 
 // --- State ---
 let gpsCoords = null;
@@ -96,7 +137,7 @@ submitBtn.addEventListener("click", async () => {
     displayResults(data);
 
   } catch (err) {
-    showError("Could not reach the server. Make sure the backend is running.");
+    showError("Could not reach the server. Check your connection and try again.");
   }
 });
 
@@ -110,8 +151,6 @@ function displayResults(data) {
   if (!data.success) {
     errorBox.hidden = false;
     errorMsg.textContent = data.error || "Analysis failed.";
-
-    // Still show sun angle if available
     if (data.sun_elevation_deg !== undefined) {
       document.getElementById("res-sun").textContent =
         `${data.sun_elevation_deg.toFixed(1)}°`;
@@ -121,15 +160,13 @@ function displayResults(data) {
 
   errorBox.hidden = true;
 
-  // Score ring animation
   const score = data.score.total;
-  const circumference = 314; // 2 * pi * r (r=50)
+  const circumference = 314;
   const offset = circumference - (score / 100) * circumference;
   const ring = document.getElementById("ring-fill");
 
   setTimeout(() => {
     ring.style.strokeDashoffset = offset;
-    // Color the ring by priority
     const colors = {
       Critical: "#e8453c",
       High: "#f07030",
@@ -145,21 +182,15 @@ function displayResults(data) {
   badge.textContent = data.score.priority;
   badge.className = `priority-badge ${data.score.priority}`;
 
-  // Detail cards
-  document.getElementById("res-depth").textContent =
-    `${data.depth.cm} cm`;
-  document.getElementById("res-road").textContent =
-    data.road.name;
-  document.getElementById("res-speed").textContent =
-    `${data.road.speed_limit_mph} mph`;
+  document.getElementById("res-depth").textContent = `${data.depth.cm} cm`;
+  document.getElementById("res-road").textContent = data.road.name;
+  document.getElementById("res-speed").textContent = `${data.road.speed_limit_mph} mph`;
   document.getElementById("res-traffic").textContent =
     data.road.daily_traffic.toLocaleString() + "/day";
-  document.getElementById("res-sun").textContent =
-    `${data.sun_elevation_deg}°`;
+  document.getElementById("res-sun").textContent = `${data.sun_elevation_deg}°`;
   document.getElementById("res-confidence").textContent =
     capitalise(data.depth.confidence);
 
-  // Score breakdown bars (max possible: depth=40, speed=40, traffic=20)
   const b = data.score.breakdown;
   setTimeout(() => {
     setBar("bar-depth", b.depth_score, 40);
@@ -170,8 +201,11 @@ function displayResults(data) {
 
 function setBar(id, value, max) {
   document.getElementById(id).style.width = `${(value / max) * 100}%`;
-  document.getElementById(`${id}-label`).textContent =
-    value.toFixed(1);
+  document.getElementById(`${id}-label`).textContent = value.toFixed(1);
+}
+
+function capitalise(str) {
+  return str ? str.charAt(0).toUpperCase() + str.slice(1) : str;
 }
 
 function showError(message) {
@@ -180,7 +214,6 @@ function showError(message) {
   document.getElementById("error-message").textContent = message;
 }
 
-// --- Navigation ---
 function showScreen(id) {
   document.querySelectorAll(".screen").forEach((s) => s.classList.remove("active"));
   document.getElementById(id).classList.add("active");
